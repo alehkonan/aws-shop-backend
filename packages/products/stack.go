@@ -17,7 +17,7 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 
 	getProductListFunction := awslambda.NewFunction(stack, jsii.String("getProductListFunction"), &awslambda.FunctionProps{
 		Runtime: awslambda.Runtime_GO_1_X(),
-		Code:    awslambda.Code_FromAsset(jsii.String("../../lambdas/getProductList"), nil),
+		Code:    awslambda.Code_FromAsset(jsii.String("lambdas/getProductList"), nil),
 		Handler: jsii.String("bootstrap"),
 		Environment: &map[string]*string{
 			"PRODUCTS_TABLE": productsTable.TableName(),
@@ -27,7 +27,7 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 
 	getProductByIdFunction := awslambda.NewFunction(stack, jsii.String("GetProductByIdFunction"), &awslambda.FunctionProps{
 		Runtime: awslambda.Runtime_GO_1_X(),
-		Code:    awslambda.Code_FromAsset(jsii.String("../../lambdas/getProductById"), nil),
+		Code:    awslambda.Code_FromAsset(jsii.String("lambdas/getProductById"), nil),
 		Handler: jsii.String("bootstrap"),
 		Environment: &map[string]*string{
 			"PRODUCTS_TABLE": productsTable.TableName(),
@@ -37,7 +37,7 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 
 	createProductFunction := awslambda.NewFunction(stack, jsii.String("CreateProductFunction"), &awslambda.FunctionProps{
 		Runtime: awslambda.Runtime_GO_1_X(),
-		Code:    awslambda.Code_FromAsset(jsii.String("../../lambdas/createProduct"), nil),
+		Code:    awslambda.Code_FromAsset(jsii.String("lambdas/createProduct"), nil),
 		Handler: jsii.String("bootstrap"),
 		Timeout: awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment: &map[string]*string{
