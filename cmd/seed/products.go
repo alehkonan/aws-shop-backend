@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aws-shop-backend/products"
+	"aws-shop-backend/packages/products"
 	"context"
 	"fmt"
 	"log"

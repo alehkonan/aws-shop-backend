@@ -1,8 +1,8 @@
 package main
 
 import (
-	"aws-shop-backend/middleware"
-	"aws-shop-backend/products"
+	"aws-shop-backend/packages/middleware"
+	"aws-shop-backend/packages/products"
 	"context"
 	"encoding/json"
 
@@ -13,17 +13,6 @@ import (
 )
 
 func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.APIGatewayProxyResponse {
-	productId, ok := event.PathParameters["productId"]
-	if !ok {
-		return events.APIGatewayProxyResponse{
-			StatusCode: 400,
-			Headers: map[string]string{
-				"Content-Type": "application/json",
-			},
-			Body: `{"message": "Product id was not found"}`,
-		}
-	}
-
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
@@ -37,14 +26,14 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 
 	repo := products.Repository(dynamodb.NewFromConfig(cfg))
 
-	data, err := repo.GetProductById(ctx, productId)
+	data, err := repo.GetAllProducts(ctx)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Headers: map[string]string{
 				"Content-Type": "application/json",
 			},
-			Body: `{"message": "Failed to get product from database"}`,
+			Body: `{"message": "Failed to get products from database"}`,
 		}
 	}
 

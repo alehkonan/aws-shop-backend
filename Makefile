@@ -3,7 +3,7 @@
 STACK ?= --all
 
 seed:
-	go run seed/main.go
+	go run cmd/seed/main.go
 
 deploy:
 	cdk deploy $(STACK)
