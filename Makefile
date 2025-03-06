@@ -1,9 +1,12 @@
-.PHONY: seed deploy
+.PHONY: build seed deploy
 
-STACK ?= --all
+STACK = $(word 2,$(MAKECMDGOALS))
+
+build:
+	go run cmd/build/main.go
 
 seed:
 	go run cmd/seed/main.go
 
-deploy:
-	cdk deploy $(STACK)
+deploy: build
+	cdk deploy $(if $(STACK),$(STACK),--all)

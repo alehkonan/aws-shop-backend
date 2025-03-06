@@ -21,3 +21,4 @@ cdk.out
 .vscode
 .env*
 !.env.example
+bootstrap
