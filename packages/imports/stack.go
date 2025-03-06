@@ -16,7 +16,7 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 	uploadBucket := awss3.Bucket_FromBucketName(stack, jsii.String("UploadBucket"), jsii.String("aws-shop-uploads"))
 
 	importProductsFileFunction := awslambda.NewFunction(stack, jsii.String("ImportProductsFileFunction"), &awslambda.FunctionProps{
-		Runtime: awslambda.Runtime_GO_1_X(),
+		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 		Code:    awslambda.Code_FromAsset(jsii.String("lambdas/importProductsFile"), nil),
 		Handler: jsii.String("bootstrap"),
 		Environment: &map[string]*string{
@@ -26,7 +26,7 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 	uploadBucket.GrantReadWrite(importProductsFileFunction, nil)
 
 	importFileParserFunction := awslambda.NewFunction(stack, jsii.String("ImportFileParserFunction"), &awslambda.FunctionProps{
-		Runtime: awslambda.Runtime_GO_1_X(),
+		Runtime: awslambda.Runtime_PROVIDED_AL2023(),
 		Code:    awslambda.Code_FromAsset(jsii.String("lambdas/importFileParser"), nil),
 		Handler: jsii.String("bootstrap"),
 		Environment: &map[string]*string{
