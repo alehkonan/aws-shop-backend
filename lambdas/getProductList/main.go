@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.APIGatewayProxyResponse {
+func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
@@ -21,7 +21,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to load AWS config"}`,
-		}
+		}, nil
 	}
 
 	repo := products.Repository(dynamodb.NewFromConfig(cfg))
@@ -34,7 +34,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to get products from database"}`,
-		}
+		}, nil
 	}
 
 	json, err := json.Marshal(data)
@@ -45,7 +45,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to parse database response"}`,
-		}
+		}, nil
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -54,7 +54,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 			"Content-Type": "application/json",
 		},
 		Body: string(json),
-	}
+	}, nil
 }
 
 func main() {

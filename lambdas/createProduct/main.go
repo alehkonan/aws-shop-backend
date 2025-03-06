@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.APIGatewayProxyResponse {
+func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var newProduct products.CreateProductDto
 	if err := json.Unmarshal([]byte(event.Body), &newProduct); err != nil {
 		return events.APIGatewayProxyResponse{
@@ -24,7 +24,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Invalid request body"}`,
-		}
+		}, nil
 	}
 
 	validate := validator.New()
@@ -36,7 +36,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: fmt.Sprintf(`{"message": "Validation error", "errors": %s}`, validationErrors.Error()),
-		}
+		}, nil
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx)
@@ -47,7 +47,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to load AWS config"}`,
-		}
+		}, nil
 	}
 
 	repo := products.Repository(dynamodb.NewFromConfig(cfg))
@@ -60,7 +60,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to create new product"}`,
-		}
+		}, nil
 	}
 
 	json, err := json.Marshal(data)
@@ -71,7 +71,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to parse database response"}`,
-		}
+		}, nil
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -80,7 +80,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) events.AP
 			"Content-Type": "application/json",
 		},
 		Body: string(json),
-	}
+	}, nil
 }
 
 func main() {
