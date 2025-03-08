@@ -1,6 +1,7 @@
 package main
 
 import (
+	"aws-shop-backend/packages/imports"
 	"aws-shop-backend/packages/products"
 	"os"
 
@@ -21,6 +22,10 @@ func main() {
 	app := awscdk.NewApp(nil)
 
 	products.NewStack(app, "ProductsStack", &awscdk.StackProps{
+		Env: env(),
+	})
+
+	imports.NewStack(app, "ImportsStack", &awscdk.StackProps{
 		Env: env(),
 	})
 

@@ -19,7 +19,7 @@ func walkFunc(path string, info fs.FileInfo, err error) error {
 
 	fmt.Println("building path", path)
 
-	cmd := exec.Command("go", "build", "-o", "bootstrap")
+	cmd := exec.Command("go", "build", "-tags", "lambda.norpc", "-o", "bootstrap")
 	cmd.Dir = path
 	cmd.Env = append(os.Environ(), "GOOS=linux", "GOARCH=amd64")
 	cmd.Stdout = os.Stdout
