@@ -74,20 +74,12 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]ProductDto, e
 }
 
 func (r *ProductRepository) GetProductById(ctx context.Context, productId string) (*ProductDto, error) {
-	productKey, err := attributevalue.Marshal(map[string]string{"id": productId})
-	if err != nil {
-		return nil, err
-	}
-
-	stockKey, err := attributevalue.Marshal(map[string]string{"product_id": productId})
-	if err != nil {
-		return nil, err
-	}
-
 	productResult, err := r.dynamoClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.productsTable),
 		Key: map[string]types.AttributeValue{
-			"id": productKey,
+			"id": &types.AttributeValueMemberS{
+				Value: productId,
+			},
 		},
 	})
 	if err != nil {
@@ -101,7 +93,9 @@ func (r *ProductRepository) GetProductById(ctx context.Context, productId string
 	stockResult, err := r.dynamoClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.stocksTable),
 		Key: map[string]types.AttributeValue{
-			"product_id": stockKey,
+			"product_id": &types.AttributeValueMemberS{
+				Value: productId,
+			},
 		},
 	})
 	if err != nil {

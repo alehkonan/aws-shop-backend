@@ -5,12 +5,25 @@ import (
 	"aws-shop-backend/packages/products"
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
+
+var dbClient *dynamodb.Client
+
+func init() {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf("unable to load SDK config, %v", err)
+	}
+
+	dbClient = dynamodb.NewFromConfig(cfg)
+}
 
 func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	productId, ok := event.PathParameters["productId"]
@@ -21,21 +34,10 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Product id was not found"}`,
-		}, nil
+		}, fmt.Errorf("no product id in path params")
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-			Headers: map[string]string{
-				"Content-Type": "application/json",
-			},
-			Body: `{"message": "Failed to load AWS config"}`,
-		}, nil
-	}
-
-	repo := products.Repository(dynamodb.NewFromConfig(cfg))
+	repo := products.Repository(dbClient)
 
 	data, err := repo.GetProductById(ctx, productId)
 	if err != nil {
@@ -45,7 +47,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to get product from database"}`,
-		}, nil
+		}, err
 	}
 
 	json, err := json.Marshal(data)
@@ -56,7 +58,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 				"Content-Type": "application/json",
 			},
 			Body: `{"message": "Failed to parse database response"}`,
-		}, nil
+		}, err
 	}
 
 	return events.APIGatewayProxyResponse{

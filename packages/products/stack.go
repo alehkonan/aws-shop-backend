@@ -46,6 +46,13 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 		},
 	})
 
+	productsTable.GrantReadData(getProductListFunction)
+	productsTable.GrantReadData(getProductByIdFunction)
+	productsTable.GrantReadWriteData(createProductFunction)
+	stocksTable.GrantReadData(getProductListFunction)
+	stocksTable.GrantReadData(getProductByIdFunction)
+	stocksTable.GrantReadWriteData(createProductFunction)
+
 	productApi := awsapigateway.NewRestApi(stack, jsii.String("ProductApi"), &awsapigateway.RestApiProps{
 		RestApiName: jsii.String("Product Api"),
 		DeployOptions: &awsapigateway.StageOptions{
