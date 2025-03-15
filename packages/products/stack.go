@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -36,6 +37,22 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 
 	createProductTopic.AddSubscription(
 		awssnssubscriptions.NewEmailSubscription(jsii.String("o.konan@softteco.com"), nil),
+	)
+
+	// Subscription to high price products
+	createProductTopic.AddSubscription(
+		awssnssubscriptions.NewEmailSubscription(
+			jsii.String("o.konan+highprice@softteco.com"),
+			&awssnssubscriptions.EmailSubscriptionProps{
+				FilterPolicy: &map[string]awssns.SubscriptionFilter{
+					"price": awssns.SubscriptionFilter_NumericFilter(
+						&awssns.NumericConditions{
+							GreaterThan: aws.Float64(100),
+						},
+					),
+				},
+			},
+		),
 	)
 
 	getProductListFunction := awslambda.NewFunction(stack, jsii.String("getProductListFunction"), &awslambda.FunctionProps{
