@@ -11,29 +11,35 @@ import (
 	"github.com/google/uuid"
 )
 
+type DbClient interface {
+	Scan(ctx context.Context, params *dynamodb.ScanInput, optFns ...func(*dynamodb.Options)) (*dynamodb.ScanOutput, error)
+	GetItem(ctx context.Context, params *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
+	TransactWriteItems(ctx context.Context, params *dynamodb.TransactWriteItemsInput, optFns ...func(*dynamodb.Options)) (*dynamodb.TransactWriteItemsOutput, error)
+}
+
 type ProductRepository struct {
-	dynamoClient  *dynamodb.Client
+	dbClient      DbClient
 	productsTable string
 	stocksTable   string
 }
 
-func Repository(dynamoClient *dynamodb.Client) *ProductRepository {
+func Repository(dbClient DbClient) *ProductRepository {
 	return &ProductRepository{
-		dynamoClient:  dynamoClient,
+		dbClient:      dbClient,
 		productsTable: os.Getenv("PRODUCTS_TABLE"),
 		stocksTable:   os.Getenv("STOCKS_TABLE"),
 	}
 }
 
 func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]ProductDto, error) {
-	productsResult, err := r.dynamoClient.Scan(ctx, &dynamodb.ScanInput{
+	productsResult, err := r.dbClient.Scan(ctx, &dynamodb.ScanInput{
 		TableName: aws.String(r.productsTable),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	stocksResult, err := r.dynamoClient.Scan(ctx, &dynamodb.ScanInput{
+	stocksResult, err := r.dbClient.Scan(ctx, &dynamodb.ScanInput{
 		TableName: aws.String(r.stocksTable),
 	})
 	if err != nil {
@@ -74,7 +80,7 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]ProductDto, e
 }
 
 func (r *ProductRepository) GetProductById(ctx context.Context, productId string) (*ProductDto, error) {
-	productResult, err := r.dynamoClient.GetItem(ctx, &dynamodb.GetItemInput{
+	productResult, err := r.dbClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.productsTable),
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{
@@ -90,7 +96,7 @@ func (r *ProductRepository) GetProductById(ctx context.Context, productId string
 		return nil, nil
 	}
 
-	stockResult, err := r.dynamoClient.GetItem(ctx, &dynamodb.GetItemInput{
+	stockResult, err := r.dbClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(r.stocksTable),
 		Key: map[string]types.AttributeValue{
 			"product_id": &types.AttributeValueMemberS{
@@ -152,7 +158,7 @@ func (r *ProductRepository) CreateProduct(ctx context.Context, dto CreateProduct
 		return nil, err
 	}
 
-	_, err = r.dynamoClient.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
+	_, err = r.dbClient.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
 				Put: &types.Put{
