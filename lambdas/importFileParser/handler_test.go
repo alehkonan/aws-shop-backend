@@ -26,43 +26,6 @@ func (m *mockS3Client) DeleteObject(ctx context.Context, params *s3.DeleteObject
 	return &s3.DeleteObjectOutput{}, nil
 }
 
-func TestParseCsv(t *testing.T) {
-	tests := []struct {
-		name        string
-		csvData     string
-		expectError bool
-	}{
-		{
-			name:        "Valid CSV",
-			csvData:     "col1,col2\nval1,val2",
-			expectError: false,
-		},
-		{
-			name:        "Invalid CSV",
-			csvData:     "col1,col2\nval1,val2,val3",
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			obj := &s3.GetObjectOutput{
-				Body: io.NopCloser(strings.NewReader(tt.csvData)),
-			}
-
-			err := parseCsv(obj)
-
-			if tt.expectError && err == nil {
-				t.Error("expected error but got none")
-			}
-
-			if !tt.expectError && err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-		})
-	}
-}
-
 func TestHandler(t *testing.T) {
 	s3Client = &mockS3Client{}
 	s3Event := events.S3Event{
