@@ -1,0 +1,197 @@
+openapi: 3.0.4
+info:
+  title: AWS shop api
+  version: 1.0.0
+  description: API for AWS shop react app
+servers:
+  - url: https://3b47j6o3bf.execute-api.us-east-1.amazonaws.com/dev
+    description: Product API
+  - url: https://kr7h9842ek.execute-api.us-east-1.amazonaws.com/dev
+    description: Import API
+paths:
+  /products:
+    servers:
+      - url: https://3b47j6o3bf.execute-api.us-east-1.amazonaws.com/dev
+        description: Product API
+    get:
+      summary: Get all products
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductDto'
+        '404':
+          description: Not found Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Products were not found
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Internal server error
+    post:
+      summary: Add new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductDto'
+      responses:
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Product is not valid
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Internal server error
+  /products/{productId}:
+    servers:
+      - url: https://3b47j6o3bf.execute-api.us-east-1.amazonaws.com/dev
+        description: Product API
+    get:
+      summary: Get a product by ID
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDto'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Product id was not provided
+        '404':
+          description: Not found Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Product was not found
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Internal server error
+  /import:
+    servers:
+      - url: https://kr7h9842ek.execute-api.us-east-1.amazonaws.com/dev
+        description: Import API
+    get:
+      summary: Get a presigned URL for products csv file uploading
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+            description: file name that will be uploaded
+            example: test.csv
+      responses:
+        200:
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: URL for sending csv file that uses PUT method and binary as payload
+                example: https://presigned-url.com
+components:
+  schemas:
+    ProductDto:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - price
+        - count
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the product
+        title:
+          type: string
+          description: Title of the product
+        description:
+          type: string
+          description: Description of the product
+        price:
+          type: number
+          format: double
+          description: Price of the product
+        count:
+          type: integer
+          format: int32
+          description: Available quantity of the product
+    CreateProductDto:
+      type: object
+      required:
+        - title
+        - description
+        - price
+        - count
+      properties:
+        title:
+          type: string
+          description: Title of the product
+        description:
+          type: string
+          description: Description of the product
+        price:
+          type: number
+          format: double
+          description: Price of the product
+        count:
+          type: integer
+          format: int32
+          description: Available quantity of the product
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Error message
