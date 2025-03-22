@@ -21,13 +21,15 @@ func main() {
 
 	app := awscdk.NewApp(nil)
 
-	products.NewStack(app, "ProductsStack", &awscdk.StackProps{
+	productsStack := products.NewStack(app, "ProductsStack", &awscdk.StackProps{
 		Env: env(),
 	})
 
-	imports.NewStack(app, "ImportsStack", &awscdk.StackProps{
+	importsStack := imports.NewStack(app, "ImportsStack", &awscdk.StackProps{
 		Env: env(),
 	})
+
+	importsStack.AddDependency(productsStack, jsii.String("Products stack must be created first"))
 
 	app.Synth(nil)
 }
