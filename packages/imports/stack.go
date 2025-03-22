@@ -49,6 +49,22 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 		},
 	)
 
+	basicAuthorizerFunction := awslambda.Function_FromFunctionAttributes(
+		stack, jsii.String("BasicAuthorizerFunction"), &awslambda.FunctionAttributes{
+			FunctionArn:     awscdk.Fn_ImportValue(jsii.String("BasicAuthorizerFunctionArn")),
+			SameEnvironment: jsii.Bool(true),
+		},
+	)
+
+	basicAuthorizer := awsapigateway.NewTokenAuthorizer(
+		stack, jsii.String("TokenAuthorizer"),
+		&awsapigateway.TokenAuthorizerProps{
+			Handler:        basicAuthorizerFunction,
+			AuthorizerName: jsii.String("TokenAuthorizer"),
+			IdentitySource: jsii.String("method.request.header.Authorization"),
+		},
+	)
+
 	importApi := awsapigateway.NewRestApi(stack, jsii.String("ImportApi"), &awsapigateway.RestApiProps{
 		RestApiName: jsii.String("Import Api"),
 		DeployOptions: &awsapigateway.StageOptions{
@@ -59,10 +75,27 @@ func NewStack(scope constructs.Construct, id string, props *awscdk.StackProps) a
 		},
 	})
 
+	importApi.AddGatewayResponse(jsii.String("Unauthorized"), &awsapigateway.GatewayResponseOptions{
+		Type:       awsapigateway.ResponseType_UNAUTHORIZED(),
+		StatusCode: jsii.String("401"),
+		ResponseHeaders: &map[string]*string{
+			"Access-Control-Allow-Origin": jsii.String("'*'"),
+		},
+	})
+
+	importApi.AddGatewayResponse(jsii.String("Forbidden"), &awsapigateway.GatewayResponseOptions{
+		Type:       awsapigateway.ResponseType_ACCESS_DENIED(),
+		StatusCode: jsii.String("403"),
+		ResponseHeaders: &map[string]*string{
+			"Access-Control-Allow-Origin": jsii.String("'*'"),
+		},
+	})
+
 	importResource := importApi.Root().AddResource(jsii.String("import"), nil)
 	importResource.AddMethod(jsii.String("GET"),
 		awsapigateway.NewLambdaIntegration(importProductsFileFunction, nil),
 		&awsapigateway.MethodOptions{
+			Authorizer: basicAuthorizer,
 			RequestParameters: &map[string]*bool{
 				"method.request.querystring.name": jsii.Bool(true),
 			},
