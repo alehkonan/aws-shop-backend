@@ -1,6 +1,7 @@
 package main
 
 import (
+	"aws-shop-backend/packages/authorization"
 	"aws-shop-backend/packages/imports"
 	"aws-shop-backend/packages/products"
 	"os"
@@ -25,11 +26,18 @@ func main() {
 		Env: env(),
 	})
 
+	authorizationStack := authorization.NewStack(app, "AuthorizationStack",
+		&awscdk.StackProps{
+			Env: env(),
+		},
+	)
+
 	importsStack := imports.NewStack(app, "ImportsStack", &awscdk.StackProps{
 		Env: env(),
 	})
 
 	importsStack.AddDependency(productsStack, jsii.String("Products stack must be created first"))
+	importsStack.AddDependency(authorizationStack, jsii.String("Authorization stack must be created first"))
 
 	app.Synth(nil)
 }
