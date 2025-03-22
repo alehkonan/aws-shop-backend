@@ -1,4 +1,5 @@
-.PHONY: build seed test deploy
+include .env.local
+export
 
 STACK = $(word 2,$(MAKECMDGOALS))
 
@@ -12,4 +13,6 @@ test:
 	go test -v ./...
 
 deploy: build
-	cdk deploy $(if $(STACK),$(STACK),--all)
+	cdk deploy $(if $(STACK),$(STACK),--all) --debug
+
+.PHONY: build seed test deploy
