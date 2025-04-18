@@ -2,17 +2,46 @@ package main
 
 import (
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"strings"
+	"sync"
+	"time"
 )
+
+type CacheItem struct {
+	Data       []byte
+	Headers    http.Header
+	StatusCode int
+	Expiration time.Time
+}
 
 var (
 	httpClient *http.Client
 	services   map[string]string
+	cache      sync.Map
+	// cache keys gotten by request path
+	cacheKeys map[string]string
 )
+
+func startCacheCleanup() {
+	go func() {
+		for {
+			time.Sleep(5 * time.Minute)
+			now := time.Now()
+			cache.Range(func(key, value any) bool {
+				item := value.(CacheItem)
+				if now.After(item.Expiration) {
+					cache.Delete(key)
+				}
+				return true
+			})
+		}
+	}()
+}
 
 func getRecipientUrl(r *http.Request) (string, error) {
 	pathParts := strings.Split(r.URL.Path, "/")
@@ -34,6 +63,21 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cacheKey := cacheKeys[r.URL.Path]
+	if r.Method == "GET" && cacheKey != "" {
+		if data, ok := cache.Load(cacheKey); ok {
+			item := data.(CacheItem)
+			if time.Now().Before(item.Expiration) {
+				maps.Copy(w.Header(), item.Headers)
+				w.Header().Set("X-Cache", "HIT")
+				w.WriteHeader(item.StatusCode)
+				w.Write(item.Data)
+				return
+			}
+			cache.Delete(cacheKey)
+		}
+	}
+
 	req, err := http.NewRequest(r.Method, recipientUrl, r.Body)
 	if err != nil {
 		http.Error(w, "Cannot process request", http.StatusBadGateway)
@@ -53,17 +97,34 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer res.Body.Close()
 
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		http.Error(w, "Cannot process request", http.StatusBadGateway)
+		return
+	}
+
+	if r.Method == "GET" && cacheKey != "" && res.StatusCode == http.StatusOK {
+		cacheItem := CacheItem{
+			Data:       body,
+			Headers:    res.Header.Clone(),
+			StatusCode: res.StatusCode,
+			Expiration: time.Now().Add(2 * time.Minute),
+		}
+		cache.Store(cacheKey, cacheItem)
+	}
+
 	for header, values := range res.Header {
 		for _, value := range values {
 			w.Header().Add(header, value)
 		}
 	}
 
-	w.WriteHeader(res.StatusCode)
-	if _, err := io.Copy(w, res.Body); err != nil {
-		http.Error(w, "Cannot process request", http.StatusBadGateway)
-		return
+	if r.Method == "GET" && cacheKey != "" {
+		w.Header().Set("X-Cache", "MISS")
 	}
+
+	w.WriteHeader(res.StatusCode)
+	w.Write(body)
 }
 
 func main() {
@@ -73,6 +134,11 @@ func main() {
 		"cart":    os.Getenv("CART_SERVICE_URL"),
 		"product": os.Getenv("PRODUCT_SERVICE_URL"),
 	}
+	cacheKeys = map[string]string{
+		"/product/products": "products",
+	}
+
+	startCacheCleanup()
 
 	server.HandleFunc("/", proxyHandler)
 
