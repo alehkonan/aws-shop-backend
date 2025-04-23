@@ -72,6 +72,7 @@ func (r *ProductRepository) GetAllProducts(ctx context.Context) ([]ProductDto, e
 			Title:       product.Title,
 			Description: product.Description,
 			Price:       product.Price,
+			Image:       product.Image,
 			Count:       count,
 		})
 	}
@@ -127,6 +128,7 @@ func (r *ProductRepository) GetProductById(ctx context.Context, productId string
 		Title:       product.Title,
 		Description: product.Description,
 		Price:       product.Price,
+		Image:       product.Image,
 		Count:       stock.Count,
 	}, nil
 }
@@ -138,6 +140,7 @@ func (r *ProductRepository) CreateProduct(ctx context.Context, dto CreateProduct
 		Description: dto.Description,
 		Price:       dto.Price,
 		Count:       dto.Count,
+		Image:       dto.Image,
 	}
 
 	productItem, err := attributevalue.MarshalMap(Product{
@@ -145,6 +148,7 @@ func (r *ProductRepository) CreateProduct(ctx context.Context, dto CreateProduct
 		Title:       product.Title,
 		Description: product.Description,
 		Price:       product.Price,
+		Image:       product.Image,
 	})
 	if err != nil {
 		return nil, err

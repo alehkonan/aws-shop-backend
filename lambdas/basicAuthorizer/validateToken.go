@@ -13,7 +13,16 @@ func validateToken(token string) error {
 		return err
 	}
 
-	if password != strings.TrimSpace(string(decoded)) {
+	credentials := strings.Split(string(decoded), ":")
+	if len(credentials) != 2 {
+		return fmt.Errorf("token is not valid")
+	}
+
+	if credentials[0] != username {
+		return fmt.Errorf("username is not correct")
+	}
+
+	if credentials[1] != password {
 		return fmt.Errorf("password is not correct")
 	}
 

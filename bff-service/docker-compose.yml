@@ -1,0 +1,8 @@
+services:
+  bff:
+    build: .
+    environment:
+      - CART_SERVICE_URL=${CART_SERVICE_URL}
+      - PRODUCT_SERVICE_URL=${PRODUCT_SERVICE_URL}
+    ports:
+      - '443:443'
